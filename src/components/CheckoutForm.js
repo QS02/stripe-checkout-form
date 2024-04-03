@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   PaymentElement,
   useStripe,
-  useElements
-} from "@stripe/react-stripe-js";
+  useElements,
+} from '@stripe/react-stripe-js';
 
-export default function CheckoutForm() {
+export default function CheckoutForm({ clientSecret }) {
   const stripe = useStripe();
   const elements = useElements();
 
@@ -17,31 +17,28 @@ export default function CheckoutForm() {
       return;
     }
 
-    const clientSecret = new URLSearchParams(window.location.search).get(
-      "payment_intent_client_secret"
-    );
-
-    if (!clientSecret) {
-      return;
-    }
-
     stripe.retrievePaymentIntent(clientSecret).then(({ paymentIntent }) => {
+      if (!paymentIntent) {
+        setMessage('Invalid payment intent.');
+        return;
+      }
+      
       switch (paymentIntent.status) {
-        case "succeeded":
-          setMessage("Payment succeeded!");
+        case 'succeeded':
+          setMessage('Payment succeeded!');
           break;
-        case "processing":
-          setMessage("Your payment is processing.");
+        case 'processing':
+          setMessage('Your payment is processing.');
           break;
-        case "requires_payment_method":
-          setMessage("Your payment was not successful, please try again.");
+        case 'requires_payment_method':
+          setMessage('Your payment was not successful, please try again.');
           break;
         default:
-          setMessage("Something went wrong.");
+          setMessage('Something went wrong.');
           break;
       }
     });
-  }, [stripe]);
+  }, [clientSecret, stripe]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,7 +55,7 @@ export default function CheckoutForm() {
       elements,
       confirmParams: {
         // Make sure to change this to your payment completion page
-        return_url: "http://localhost:3000/success",
+        return_url: 'http://localhost:3000/success',
       },
     });
 
@@ -67,26 +64,25 @@ export default function CheckoutForm() {
     // your `return_url`. For some payment methods like iDEAL, your customer will
     // be redirected to an intermediate site first to authorize the payment, then
     // redirected to the `return_url`.
-    if (error.type === "card_error" || error.type === "validation_error") {
+    if (error.type === 'card_error' || error.type === 'validation_error') {
       setMessage(error.message);
     } else {
-      setMessage("An unexpected error occurred.");
+      setMessage('An unexpected error occurred.');
     }
 
     setIsLoading(false);
   };
 
   const paymentElementOptions = {
-    layout: "tabs"
-  }
+    layout: 'tabs',
+  };
 
   return (
     <form id="payment-form" onSubmit={handleSubmit}>
-
       <PaymentElement id="payment-element" options={paymentElementOptions} />
       <button disabled={isLoading || !stripe || !elements} id="submit">
         <span id="button-text">
-          {isLoading ? <div className="spinner" id="spinner"></div> : "Pay now"}
+          {isLoading ? <div className="spinner" id="spinner"></div> : 'Pay now'}
         </span>
       </button>
       {/* Show any error or success messages */}
