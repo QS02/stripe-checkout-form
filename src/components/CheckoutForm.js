@@ -63,10 +63,7 @@ export default function CheckoutForm({ clientSecret }) {
 
     const confirm = await stripe.confirmPayment({
       elements,
-      confirmParams: {
-        // Make sure to change this to your payment completion page
-        return_url: 'http://localhost:3000/success',
-      },
+      redirect: 'if_required',
     });
     console.log('confirm', confirm);
 
@@ -76,10 +73,10 @@ export default function CheckoutForm({ clientSecret }) {
     // your `return_url`. For some payment methods like iDEAL, your customer will
     // be redirected to an intermediate site first to authorize the payment, then
     // redirected to the `return_url`.
-    if (error.type === 'card_error' || error.type === 'validation_error') {
-      setMessage(error.message);
-    } else {
+    if (error) {
       setMessage('An unexpected error occurred.');
+    } else {
+      router.push('/success');
     }
 
     setIsLoading(false);
